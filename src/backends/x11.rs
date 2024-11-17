@@ -64,20 +64,6 @@ impl<D: HasDisplayHandle + ?Sized> ContextInterface<D> for Arc<X11DisplayImpl<D>
         let raw = display.display_handle()?.as_raw();
         let xcb_handle = match raw {
             RawDisplayHandle::Xcb(xcb_handle) => xcb_handle,
-            RawDisplayHandle::Xlib(xlib) => {
-                // Convert to an XCB handle.
-                let connection = xlib.display.map(|display| {
-                    // Get the underlying XCB connection.
-                    // SAFETY: The user has asserted that the display handle is valid.
-                    unsafe {
-                        let display = tiny_xlib::Display::from_ptr(display.as_ptr());
-                        NonNull::new_unchecked(display.as_raw_xcb_connection()).cast()
-                    }
-                });
-
-                // Construct the equivalent XCB display and window handles.
-                XcbDisplayHandle::new(connection, xlib.screen)
-            }
             _ => return Err(InitError::Unsupported(display)),
         };
 
